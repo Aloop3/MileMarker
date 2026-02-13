@@ -15,14 +15,14 @@ class Vehicle {
     var year: String
     var make: String
     var model: String
-    var last_odometer: Int?
+    var lastOdometer: Int
     
-    init(nickname: String? = nil, year: String, make: String, model: String, last_odometer: Int? = nil){
+    init(nickname: String? = nil, year: String, make: String, model: String, lastOdometer: Int){
         self.nickname = nickname
         self.year = year
         self.make = make
         self.model = model
-        self.last_odometer = last_odometer
+        self.lastOdometer = lastOdometer
     }
 }
 
@@ -33,14 +33,14 @@ extension Vehicle {
             year: "2009",
             make: "Honda",
             model: "Accord",
-            last_odometer: 100000
+            lastOdometer: 100000
         ),
         Vehicle(
             nickname: "Mini",
             year: "2012",
             make: "Mini",
             model: "Cooper",
-            last_odometer: 70000
+            lastOdometer: 70000
         )
     ]
 }
