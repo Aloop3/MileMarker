@@ -1,0 +1,5 @@
+# local xcode configs
+*.xcworkspace
+*/xcuserdata/*
+*.DS_Store
+*/DerivedData/*
