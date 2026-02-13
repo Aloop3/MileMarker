@@ -1,2 +1,5 @@
 # local xcode configs
-ios/MileMarker/MileMarker.xcodeproj/
+*.xcworkspace
+*/xcuserdata/*
+*.DS_Store
+*/DerivedData/*
