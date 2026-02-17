@@ -1,5 +1,27 @@
 locals {
   name_prefix = "${var.project_name}-${var.environment}"
+
+  protected_route_keys = toset([
+    "POST /vehicle",
+    "PATCH /vehicle/{vehicle_id}",
+    "GET /vehicle/{vehicle_id}",
+    "GET /vehicle",
+    "DELETE /vehicle/{vehicle_id}",
+
+    "POST /fuel_log",
+    "PATCH /fuel_log/{fuellog_id}",
+    "GET /fuel_log/{fuellog_id}",
+    "GET /fuel_log",
+    "DELETE /fuel_log/{fuellog_id}",
+
+    "POST /maintenance",
+    "PATCH /maintenance/{maintenance_id}",
+    "GET /maintenance/{maintenance_id}",
+    "GET /maintenance",
+    "DELETE /maintenance/{maintenance_id}",
+
+    "POST /maintenance/reminders/process",
+  ])
 }
 
 # -----------------------
@@ -198,15 +220,20 @@ data "aws_iam_policy_document" "lambda_dynamodb" {
       "dynamodb:PutItem",
       "dynamodb:UpdateItem",
       "dynamodb:DeleteItem",
-      "dynamodb:Query"
+      "dynamodb:Query",
+      "dynamodb:Scan"
     ]
+
     resources = [
       aws_dynamodb_table.vehicles.arn,
       "${aws_dynamodb_table.vehicles.arn}/index/*",
+
       aws_dynamodb_table.fuel_logs.arn,
       "${aws_dynamodb_table.fuel_logs.arn}/index/*",
+
       aws_dynamodb_table.maintenance_records.arn,
       "${aws_dynamodb_table.maintenance_records.arn}/index/*",
+
       aws_dynamodb_table.maintenance_notifications.arn,
       "${aws_dynamodb_table.maintenance_notifications.arn}/index/*"
     ]
@@ -286,11 +313,13 @@ resource "aws_apigatewayv2_route" "health" {
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
-# Protected example route: GET /vehicle (requires JWT)
-resource "aws_apigatewayv2_route" "vehicle" {
-  api_id             = aws_apigatewayv2_api.http_api.id
-  route_key          = "GET /vehicle"
-  target             = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+resource "aws_apigatewayv2_route" "protected" {
+  for_each = local.protected_route_keys
+
+  api_id    = aws_apigatewayv2_api.http_api.id
+  route_key = each.value
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+
   authorization_type = "JWT"
   authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
 }
