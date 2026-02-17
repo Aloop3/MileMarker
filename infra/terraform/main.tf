@@ -28,6 +28,105 @@ resource "aws_dynamodb_table" "vehicles" {
 }
 
 # -----------------------
+# DynamoDB: Fuel Logs table
+# -----------------------
+
+resource "aws_dynamodb_table" "fuel_logs" {
+  name         = "${local.name_prefix}-fuel-logs"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "vehicle_id"
+  range_key    = "timestamp"
+
+  attribute {
+    name = "vehicle_id"
+    type = "S"
+  }
+
+  attribute {
+    name = "timestamp"
+    type = "S"
+  }
+
+  attribute {
+    name = "fuellog_id"
+    type = "S"
+  }
+
+  global_secondary_index {
+    name            = "fuellog_id-index"
+    hash_key        = "fuellog_id"
+    projection_type = "ALL"
+  }
+
+  tags = {
+    Project     = var.project_name
+    Environment = var.environment
+  }
+}
+
+# -----------------------
+# DynamoDB: Maintenance Records table
+# -----------------------
+
+resource "aws_dynamodb_table" "maintenance_records" {
+  name         = "${local.name_prefix}-maintenance-records"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "vehicle_id"
+  range_key    = "timestamp"
+
+  attribute {
+    name = "vehicle_id"
+    type = "S"
+  }
+
+  attribute {
+    name = "timestamp"
+    type = "S"
+  }
+
+  attribute {
+    name = "maintenance_id"
+    type = "S"
+  }
+
+  global_secondary_index {
+    name            = "maintenance_id-index"
+    hash_key        = "maintenance_id"
+    projection_type = "ALL"
+  }
+
+  tags = {
+    Project     = var.project_name
+    Environment = var.environment
+  }
+}
+
+# -----------------------
+# DynamoDB: Maintenance Records table
+# -----------------------
+resource "aws_dynamodb_table" "maintenance_notifications" {
+  name         = "${local.name_prefix}-maintenance-notifications"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "vehicle_id"
+  range_key    = "notification_id"
+
+  attribute {
+    name = "vehicle_id"
+    type = "S"
+  }
+
+  attribute {
+    name = "notification_id"
+    type = "S"
+  }
+
+  tags = {
+    Project     = var.project_name
+    Environment = var.environment
+  }
+}
+
+# -----------------------
 # Cognito: User Pool + App Client
 # -----------------------
 resource "aws_cognito_user_pool" "user_pool" {
@@ -102,7 +201,14 @@ data "aws_iam_policy_document" "lambda_dynamodb" {
       "dynamodb:Query"
     ]
     resources = [
-      aws_dynamodb_table.vehicles.arn
+      aws_dynamodb_table.vehicles.arn,
+      "${aws_dynamodb_table.vehicles.arn}/index/*",
+      aws_dynamodb_table.fuel_logs.arn,
+      "${aws_dynamodb_table.fuel_logs.arn}/index/*",
+      aws_dynamodb_table.maintenance_records.arn,
+      "${aws_dynamodb_table.maintenance_records.arn}/index/*",
+      aws_dynamodb_table.maintenance_notifications.arn,
+      "${aws_dynamodb_table.maintenance_notifications.arn}/index/*"
     ]
   }
 }
@@ -132,7 +238,10 @@ resource "aws_lambda_function" "api_stub" {
 
   environment {
     variables = {
-      VEHICLES_TABLE = aws_dynamodb_table.vehicles.name
+      VEHICLES_TABLE                  = aws_dynamodb_table.vehicles.name
+      FUEL_LOGS_TABLE                 = aws_dynamodb_table.fuel_logs.name
+      MAINTENANCE_RECORDS_TABLE       = aws_dynamodb_table.maintenance_records.name
+      MAINTENANCE_NOTIFICATIONS_TABLE = aws_dynamodb_table.maintenance_notifications.name
     }
   }
 
